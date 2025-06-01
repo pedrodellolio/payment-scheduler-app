@@ -14,14 +14,26 @@ export class Transaction {
   @Prop({ type: Date, required: true })
   occurredAt: Date;
 
-  @Prop({ required: true })
-  isRecurrent: boolean;
+  @Prop()
+  frequency?: 'yearly' | 'monthly' | 'weekly' | 'daily';
 
-  @Prop({ required: false })
+  @Prop()
+  nextPaymentDate?: Date;
+
+  @Prop()
+  remainingInstallments?: number;
+
+  @Prop()
   numberOfInstallments?: number;
+
+  @Prop({ default: 'paid' })
+  status: 'pending' | 'paid';
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   user: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Transaction' })
+  originalTransaction?: Types.ObjectId;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

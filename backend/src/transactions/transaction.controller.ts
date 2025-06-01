@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { Transaction } from './schemas/transaction.schema';
 import { Types } from 'mongoose';
@@ -20,5 +20,18 @@ export class TransactionController {
     @Body() dto: CreateTransactionDto,
   ) {
     this.transactionService.create(dto, userId);
+  }
+
+  @Delete(':id')
+  async delete(
+    @UserId() userId: Types.ObjectId,
+    @Param('id') id: string,
+  ): Promise<{ deleted: boolean }> {
+    return this.transactionService.delete(id, userId);
+  }
+
+  @Post('run')
+  runRecurringPaymentsJob() {
+    return this.transactionService.handleRecurringPayments();
   }
 }

@@ -30,4 +30,6 @@ export class CreateTransactionDto {
   @IsNumber()
   @IsPositive()
   numberOfInstallments?: number;
+
+  frequency?: 'yearly' | 'monthly' | 'weekly' | 'daily';
 }
