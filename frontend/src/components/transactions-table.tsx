@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Transaction } from "../models/transaction";
 import { deleteTransactions, getTransactions } from "../api/transactions";
 import { useEffect, useRef, useState } from "react";
+import { toZonedTime, format } from "date-fns-tz";
 
 type Props = {};
 
@@ -57,7 +58,11 @@ export default function TransactionsTable({}: Props) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR");
+    return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  };
+
+  const capitalizeText = (text: string) => {
+    return text.substring(0, 1).toUpperCase() + text.substring(1, text.length);
   };
 
   if (isError) return <p>Error</p>;
@@ -77,6 +82,12 @@ export default function TransactionsTable({}: Props) {
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Recurrent
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Next Payment
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Status
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Installments
@@ -113,11 +124,15 @@ export default function TransactionsTable({}: Props) {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {item.frequency ? "Yes" : "No"}
               </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {item.nextPaymentDate ? formatDate(item.nextPaymentDate) : "-"}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {capitalizeText(item.status)}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 relative">
                 <div className="flex items-center justify-between">
-                  <span>
-                    {item.numberOfInstallments ?? "-"}
-                  </span>
+                  <span>{item.numberOfInstallments ?? "-"}</span>
                   <div className="relative">
                     <button
                       onClick={() => toggleMenu(index)}

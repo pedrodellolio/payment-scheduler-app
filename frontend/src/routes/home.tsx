@@ -23,7 +23,7 @@ function Home() {
           type="submit"
           disabled={isPending}
           onClick={() => mutateAsync}
-          className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+          className="px-4 py-2 bg-teal-600 text-sm text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
         >
           {isPending ? "Running..." : "Run now"}
         </button>

@@ -11,12 +11,33 @@ export class TransactionService {
 
   constructor(
     @InjectModel(Transaction.name) private model: Model<Transaction>,
-    @InjectConnection() private readonly connection: Connection,
+    // @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  async findAll(userId: Types.ObjectId): Promise<Transaction[]> {
+  async findAll(userId: Types.ObjectId, groupByRecurrence: boolean = false) {
     const transactions = await this.model.find({ user: userId }).lean().exec();
-    return transactions.map(({ _id, ...rest }) => ({
+    if (!groupByRecurrence) {
+      return transactions.map(({ _id, ...rest }) => ({
+        ...rest,
+        id: _id.toString(),
+      }));
+    }
+
+    // Group by originalTransaction or self
+    const latestByGroup = new Map<string, any>();
+
+    for (const tx of transactions) {
+      const groupId = tx.originalTransaction?.toString() || tx._id.toString();
+      const existing = latestByGroup.get(groupId);
+      if (
+        !existing ||
+        new Date(tx.occurredAt) > new Date(existing.occurredAt)
+      ) {
+        latestByGroup.set(groupId, tx);
+      }
+    }
+
+    return Array.from(latestByGroup.values()).map(({ _id, ...rest }) => ({
       ...rest,
       id: _id.toString(),
     }));
@@ -30,6 +51,7 @@ export class TransactionService {
     const createdTransaction = new this.model({
       ...dto,
       nextPaymentDate,
+      occurredAt: this.toUtcMidnight(dto.occurredAt),
       user: userId,
     });
     return createdTransaction.save();
@@ -62,6 +84,7 @@ export class TransactionService {
         // { session },
       );
       for (const payment of paymentsDue) {
+        this.logger.log(`Start processing payments for user ${payment.user}`);
         const newTransaction = new this.model({
           title: payment.title,
           valueBrl: payment.valueBrl,
@@ -116,6 +139,12 @@ export class TransactionService {
       default:
         throw new Error(`Unsupported frequency: ${frequency}`);
     }
-    return nextDate;
+    return this.toUtcMidnight(nextDate);
+  }
+
+  private toUtcMidnight(date: Date | string): Date {
+    const d = new Date(date);
+    d.setUTCHours(0, 0, 0, 0); // UTC midnight
+    return d;
   }
 }

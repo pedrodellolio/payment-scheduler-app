@@ -41,7 +41,9 @@ export const deleteTransactions = async (id: string) => {
 
 export const runRecurringPaymentsJob = async () => {
   try {
-    const response = await axiosInstance.post<Transaction[]>("/transactions/run");
+    const response = await axiosInstance.post<Transaction[]>(
+      "/transactions/run"
+    );
     return response.data;
   } catch (error: any) {
     throw new Error(

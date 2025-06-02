@@ -4,7 +4,9 @@ export interface Transaction {
   valueBrl: number;
   occurredAt: string;
   numberOfInstallments?: number;
+  nextPaymentDate?: string;
   frequency?: "daily" | "weekly" | "monthly" | "yearly";
+  status: "paid" | "pending";
 }
 
 export type CreateTransactionForm = {
