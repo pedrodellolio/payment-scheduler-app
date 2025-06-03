@@ -1,9 +1,12 @@
 import { createContext, useState, useEffect, type ReactNode } from "react";
 import axiosInstance from "../api/axios";
+import type { CreateUserForm } from "../routes/register";
 
 interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 interface AuthContextType {
@@ -12,6 +15,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  register: (data: CreateUserForm) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -67,9 +71,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const register = async (data: CreateUserForm) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await axiosInstance.post("/auth/register", data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Registration failed");
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, login, logout, refreshUser }}
+      value={{ user, loading, error, login, register, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

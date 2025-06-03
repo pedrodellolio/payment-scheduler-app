@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Transaction } from "../models/transaction";
 import { deleteTransactions, getTransactions } from "../api/transactions";
 import { useEffect, useRef, useState } from "react";
-import { toZonedTime, format } from "date-fns-tz";
 
 type Props = {};
 
@@ -13,7 +12,7 @@ export default function TransactionsTable({}: Props) {
     isError,
   } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
-    queryFn: getTransactions,
+    queryFn: () => getTransactions(true),
   });
 
   const queryClient = useQueryClient();
@@ -57,11 +56,13 @@ export default function TransactionsTable({}: Props) {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
   };
 
   const capitalizeText = (text: string) => {
+    if (!text) return "";
     return text.substring(0, 1).toUpperCase() + text.substring(1, text.length);
   };
 
@@ -98,7 +99,7 @@ export default function TransactionsTable({}: Props) {
         {transactions?.length === 0 ? (
           <tr>
             <td
-              colSpan={5}
+              colSpan={7}
               className="px-6 py-4 text-center text-sm text-gray-500"
             >
               No entries yet. Add one using the form above.

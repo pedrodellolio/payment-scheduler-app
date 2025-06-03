@@ -1,8 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { postTransactions } from "../api/transactions";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { useState } from "react";
 import type { CreateTransactionForm } from "../models/transaction";
+import ErrorMessage from "./error-message";
+import CurrencyInput from "./currency-input";
+import { Plus } from "lucide-react";
 
 type Props = {};
 
@@ -25,6 +28,7 @@ export default function TransactionsForm({}: Props) {
   const {
     register,
     handleSubmit,
+    control,
     setValue,
     formState: { errors },
   } = useForm<CreateTransactionForm>({
@@ -40,13 +44,8 @@ export default function TransactionsForm({}: Props) {
     await mutateAsync(data);
   };
 
-  if (isRecurrent) {
-    console.log("Monthly");
-    setValue("frequency", "monthly");
-  } else {
-    console.log(undefined);
-    setValue("frequency", undefined);
-  }
+  if (isRecurrent) setValue("frequency", "monthly");
+  else setValue("frequency", undefined);
 
   return (
     <form
@@ -65,7 +64,7 @@ export default function TransactionsForm({}: Props) {
           type="text"
           {...register("title", { required: true })}
         />
-        {errors.title && <span>This field is required</span>}
+        {errors.title && <ErrorMessage error="This field is required" />}
       </div>
 
       <div className="space-y-2">
@@ -75,12 +74,20 @@ export default function TransactionsForm({}: Props) {
         >
           Value (R$)
         </label>
-        <input
-          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600"
-          type="number"
-          {...register("valueBrl", { required: true })}
+        <Controller
+          name="valueBrl"
+          control={control}
+          defaultValue={0}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <CurrencyInput
+              value={field.value}
+              onChange={field.onChange}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600"
+            />
+          )}
         />
-        {errors.valueBrl && <span>This field is required</span>}
+        {errors.valueBrl && <ErrorMessage error="This field is required" />}
       </div>
 
       <div className="space-y-2">
@@ -95,7 +102,7 @@ export default function TransactionsForm({}: Props) {
           type="date"
           {...register("occurredAt", { required: true })}
         />
-        {errors.occurredAt && <span>This field is required</span>}
+        {errors.occurredAt && <ErrorMessage error="This field is required" />}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -133,7 +140,9 @@ export default function TransactionsForm({}: Props) {
                 </option>
               ))}
             </select>
-            {errors.frequency && <span>This field is required</span>}
+            {errors.frequency && (
+              <ErrorMessage error="This field is required" />
+            )}
           </div>
           <div className="space-y-2">
             <label
@@ -155,8 +164,9 @@ export default function TransactionsForm({}: Props) {
         <button
           type="submit"
           disabled={isPending}
-          className="px-4 py-2 bg-teal-600 text-sm text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+          className="flex flex-row items-center px-4 py-2 bg-teal-600 text-sm text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
         >
+          <Plus className="w-4 h-4 mr-2" />
           {isPending ? "Loading..." : "Add Transaction"}
         </button>
       </div>

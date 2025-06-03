@@ -31,6 +31,17 @@ export class AuthController {
     return token;
   }
 
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res) {
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+    });
+
+    return { message: 'Logged out successfully' };
+  }
+
   @Get('me')
   getMe(@Req() req) {
     return { user: req.user };

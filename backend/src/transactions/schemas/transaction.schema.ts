@@ -5,7 +5,7 @@ export type TransactionDocument = HydratedDocument<Transaction>;
 
 @Schema()
 export class Transaction {
-  @Prop({ required: true })
+  @Prop({ required: true, set: (val: string) => val.toUpperCase() })
   title: string;
 
   @Prop({ required: true })

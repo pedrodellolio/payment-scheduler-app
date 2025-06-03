@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Transaction } from './schemas/transaction.schema';
-import { Connection, Model, Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Transaction, TransactionDocument } from './schemas/transaction.schema';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
@@ -73,52 +73,68 @@ export class TransactionService {
     waitForCompletion: true,
   })
   async handleRecurringPayments() {
-    // const session = await this.connection.startSession();
-    // session.startTransaction();
+    const today = new Date();
 
     try {
-      const today = new Date();
-      const paymentsDue = await this.model.find(
-        { nextPaymentDate: { $lte: today } },
-        // null,
-        // { session },
-      );
+      const paymentsDue = await this.model
+        .aggregate()
+        .match({
+          nextPaymentDate: { $lte: today },
+        })
+        // Check if there is any transaction referenced as originalTransaction
+        .lookup({
+          from: 'transactions',
+          localField: '_id',
+          foreignField: 'originalTransaction',
+          as: 'children',
+        })
+        .match({ children: { $eq: [] } });
+
       for (const payment of paymentsDue) {
         this.logger.log(`Start processing payments for user ${payment.user}`);
+
+        const nextRemaining =
+          payment.remainingInstallments !== undefined
+            ? payment.remainingInstallments - 1
+            : undefined;
+
+        if (
+          payment.numberOfInstallments &&
+          nextRemaining !== undefined &&
+          nextRemaining < 0
+        ) {
+          this.logger.log(
+            `No installments left for payment ${payment.originalTransaction ?? payment._id}`,
+          );
+          continue;
+        }
+
+        const lastDate = payment.nextPaymentDate || today;
+        const freq = payment.frequency || 'monthly';
+        const calculatedNextDate = this.calculateNextPaymentDate(
+          lastDate,
+          freq,
+        );
+
         const newTransaction = new this.model({
           title: payment.title,
           valueBrl: payment.valueBrl,
           occurredAt: today,
-          frequency: payment.frequency,
-          nextPaymentDate: this.calculateNextPaymentDate(
-            payment.nextPaymentDate || today,
-            payment.frequency ?? 'monthly',
-          ),
-          remainingInstallments: payment.remainingInstallments
-            ? payment.remainingInstallments - 1
-            : undefined,
+          frequency: freq,
+          nextPaymentDate: calculatedNextDate,
+          remainingInstallments: nextRemaining,
           numberOfInstallments: payment.numberOfInstallments,
           status: 'paid',
           user: payment.user,
-          originalTransaction: payment.originalTransaction || payment._id,
+          originalTransaction: payment.originalTransaction ?? payment._id,
         });
 
-        await newTransaction
-          .save
-          // { session }
-          ();
+        await newTransaction.save();
         this.logger.log(`Processed payment for user ${payment.user}`);
       }
-      // await session.commitTransaction();
-    } catch (error) {
-      // await session.abortTransaction();
-      this.logger.error(
-        `Failed to process recurring payments: ${error.message}`,
-      );
+    } catch (err) {
+      this.logger.error(`Failed to process recurring payments: ${err.message}`);
     }
-    // finally {
-    //   session.endSession();
-    // }
   }
 
   private calculateNextPaymentDate(currentDate: Date, frequency: string): Date {

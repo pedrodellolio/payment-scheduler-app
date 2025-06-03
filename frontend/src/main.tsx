@@ -7,6 +7,7 @@ import Home from "./routes/home";
 import Login from "./routes/login";
 import PrivateRoute from "./routes/private";
 import { AuthProvider } from "./contexts/auth";
+import Register from "./routes/register";
 
 const queryClient = new QueryClient();
 createRoot(document.getElementById("root")!).render(
@@ -20,7 +21,7 @@ createRoot(document.getElementById("root")!).render(
             </Route>
 
             <Route path="login" element={<Login />} />
-            {/* <Route path="register" element={<Register />} /> */}
+            <Route path="register" element={<Register />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { Transaction } from './schemas/transaction.schema';
 import { Types } from 'mongoose';
@@ -10,8 +18,12 @@ export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
   @Get()
-  async getAll(@UserId() userId: Types.ObjectId): Promise<Transaction[]> {
-    return this.transactionService.findAll(userId);
+  async getAll(
+    @UserId() userId: Types.ObjectId,
+    @Query('groupByRecurrence') groupByRecurrence?: string,
+  ): Promise<Transaction[]> {
+    const groupBy = groupByRecurrence === '1';
+    return this.transactionService.findAll(userId, groupBy);
   }
 
   @Post()
@@ -19,7 +31,7 @@ export class TransactionController {
     @UserId() userId: Types.ObjectId,
     @Body() dto: CreateTransactionDto,
   ) {
-    this.transactionService.create(dto, userId);
+    return this.transactionService.create(dto, userId);
   }
 
   @Delete(':id')

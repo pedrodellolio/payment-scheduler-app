@@ -2,6 +2,7 @@ import TransactionsTable from "../components/transactions-table";
 import TransactionsForm from "../components/transactions-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { runRecurringPaymentsJob } from "../api/transactions";
+import { Play } from "lucide-react";
 
 function Home() {
   const queryClient = useQueryClient();
@@ -11,6 +12,10 @@ function Home() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
+
+  const handleRunJob = async () => {
+    await mutateAsync();
+  };
 
   return (
     <main className="container mx-auto max-w-4xl py-8 px-4">
@@ -22,9 +27,10 @@ function Home() {
         <button
           type="submit"
           disabled={isPending}
-          onClick={() => mutateAsync}
-          className="px-4 py-2 bg-teal-600 text-sm text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+          onClick={handleRunJob}
+          className="flex flex-row items-center px-4 py-2 bg-teal-600 text-sm text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
         >
+          <Play className="w-4 h-4 mr-2" />
           {isPending ? "Running..." : "Run now"}
         </button>
       </div>

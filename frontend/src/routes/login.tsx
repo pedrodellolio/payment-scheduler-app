@@ -1,6 +1,7 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useAuth } from "../hooks/use-auth";
 import { Link, Navigate } from "react-router";
+import ErrorMessage from "../components/error-message";
 
 type LoginForm = {
   email: string;
@@ -41,9 +42,9 @@ const Login = () => {
             className="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm placeholder:text-sm"
             type="email"
             {...register("email", { required: true })}
-            placeholder="usuario@email.com"
+            placeholder="user@email.com"
           />
-          {errors.email && <span>This field is required</span>}
+          {errors.email && <ErrorMessage error="This field is required" />}
         </div>
 
         <div className="w-full">
@@ -56,7 +57,7 @@ const Login = () => {
             {...register("password", { required: true })}
             placeholder="*******"
           />
-          {errors.password && <span>This field is required</span>}
+          {errors.password && <ErrorMessage error="This field is required" />}
         </div>
 
         {error && <div style={{ color: "red" }}>{error}</div>}
@@ -69,7 +70,13 @@ const Login = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
         <p className="text-sm text-gray-500">
-          Don't have an account? <Link className="underline font-semibold text-teal-600" to={"/"}>Sign up</Link>
+          Don't have an account?{" "}
+          <Link
+            className="underline font-semibold text-teal-600"
+            to={"/register"}
+          >
+            Sign up
+          </Link>
         </p>
       </form>
     </main>

@@ -1,9 +1,12 @@
 import axiosInstance from "../api/axios";
 import type { CreateTransactionForm, Transaction } from "../models/transaction";
 
-export const getTransactions = async () => {
+export const getTransactions = async (groupByRecurrence: boolean = false) => {
   try {
-    const response = await axiosInstance.get<Transaction[]>("/transactions");
+    const groupBy = groupByRecurrence ? 1 : 0;
+    const response = await axiosInstance.get<Transaction[]>(
+      "/transactions?groupByRecurrence=" + groupBy
+    );
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -14,7 +17,7 @@ export const getTransactions = async () => {
 
 export const postTransactions = async (data: CreateTransactionForm) => {
   try {
-    const response = await axiosInstance.post<Transaction[]>(
+    const response = await axiosInstance.post<Transaction>(
       "/transactions",
       data
     );
@@ -28,9 +31,7 @@ export const postTransactions = async (data: CreateTransactionForm) => {
 
 export const deleteTransactions = async (id: string) => {
   try {
-    const response = await axiosInstance.delete<Transaction[]>(
-      `/transactions/${id}`
-    );
+    const response = await axiosInstance.delete<boolean>(`/transactions/${id}`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -41,9 +42,7 @@ export const deleteTransactions = async (id: string) => {
 
 export const runRecurringPaymentsJob = async () => {
   try {
-    const response = await axiosInstance.post<Transaction[]>(
-      "/transactions/run"
-    );
+    const response = await axiosInstance.post("/transactions/run");
     return response.data;
   } catch (error: any) {
     throw new Error(
