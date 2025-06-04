@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt/jwt.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationModule } from './notifications/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
+    NotificationModule,
     TransactionsModule,
     UsersModule,
     AuthModule,

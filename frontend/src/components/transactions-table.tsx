@@ -12,7 +12,7 @@ export default function TransactionsTable({}: Props) {
     isError,
   } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
-    queryFn: () => getTransactions(true),
+    queryFn: () => getTransactions(false),
   });
 
   const queryClient = useQueryClient();

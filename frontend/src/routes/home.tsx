@@ -1,8 +1,10 @@
 import TransactionsTable from "../components/transactions-table";
 import TransactionsForm from "../components/transactions-form";
+import NotificationComponent from "../components/notifications-wrapper";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { runRecurringPaymentsJob } from "../api/transactions";
 import { Play } from "lucide-react";
+import { Toaster } from "sonner";
 
 function Home() {
   const queryClient = useQueryClient();
@@ -23,6 +25,7 @@ function Home() {
         <TransactionsForm />
       </div>
 
+      <NotificationComponent />
       <div className="w-full flex flex-row justify-end">
         <button
           type="submit"
@@ -37,6 +40,8 @@ function Home() {
       <div className="mt-4 bg-white rounded-lg border border-gray-200">
         <TransactionsTable />
       </div>
+
+      <Toaster />
     </main>
   );
 }

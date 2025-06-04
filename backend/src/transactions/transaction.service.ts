@@ -1,17 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Transaction, TransactionDocument } from './schemas/transaction.schema';
-import { Model, PipelineStage, Types } from 'mongoose';
+import { Transaction } from './schemas/transaction.schema';
+import { Model, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ClientProxy } from '@nestjs/microservices';
+import { NotificationPayloadDto } from 'src/notifications/dto/notification-payload.dto';
 
 @Injectable()
 export class TransactionService {
   private readonly logger = new Logger(TransactionService.name);
 
   constructor(
+    @Inject('NOTIFICATION_SERVICE') private readonly client: ClientProxy,
     @InjectModel(Transaction.name) private model: Model<Transaction>,
-    // @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async findAll(userId: Types.ObjectId, groupByRecurrence: boolean = false) {
@@ -48,10 +50,11 @@ export class TransactionService {
       dto.frequency &&
       this.calculateNextPaymentDate(dto.occurredAt, dto.frequency);
 
+    const occurredAtUtc = this.toUtcMidnight(dto.occurredAt);
     const createdTransaction = new this.model({
       ...dto,
       nextPaymentDate,
-      occurredAt: this.toUtcMidnight(dto.occurredAt),
+      occurredAt: occurredAtUtc,
       user: userId,
     });
     return createdTransaction.save();
@@ -119,7 +122,7 @@ export class TransactionService {
         const newTransaction = new this.model({
           title: payment.title,
           valueBrl: payment.valueBrl,
-          occurredAt: today,
+          occurredAt: lastDate,
           frequency: freq,
           nextPaymentDate: calculatedNextDate,
           remainingInstallments: nextRemaining,
@@ -130,7 +133,18 @@ export class TransactionService {
         });
 
         await newTransaction.save();
-        this.logger.log(`Processed payment for user ${payment.user}`);
+
+        const message = `The routine completed successfully, and new payments have been created.`;
+        this.logger.log(message);
+
+        const notificationPayload: NotificationPayloadDto = {
+          type: 'recurring_payment_processed',
+          userId: payment.user.toString(),
+          message,
+          title: 'Success',
+          processedAt: newTransaction.occurredAt.toISOString(),
+        };
+        this.client.emit('new_notification', notificationPayload);
       }
     } catch (err) {
       this.logger.error(`Failed to process recurring payments: ${err.message}`);
